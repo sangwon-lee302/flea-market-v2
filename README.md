@@ -1,58 +1,156 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# COACHTECH フリマ
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![CI](https://github.com/sangwon-lee302/coachtech-flea-market/actions/workflows/ci.yml/badge.svg)](https://github.com/sangwon-lee302/coachtech-flea-market/actions/workflows/ci.yml)
 
-## About Laravel
+商品の出品と購入ができるフリマアプリケーション。
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+現在は開発環境とツールチェーンの整備までが完了しており、機能の実装はこれから進める。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 技術スタック
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+| 分類           | 内容                           |
+| -------------- | ------------------------------ |
+| 言語           | PHP 8.5                        |
+| フレームワーク | Laravel 13                     |
+| データベース   | MySQL 8.4                      |
+| フロントエンド | Vite 8・Tailwind CSS 4         |
+| 開発環境       | Laravel Sail（Docker Compose） |
+| メール         | Mailpit                        |
 
-## Learning Laravel
+## 環境構築
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+Docker が動作する環境があればよく、ホストに PHP や Node.js は必要ない。
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+git clone git@github.com:sangwon-lee302/coachtech-flea-market.git
+cd coachtech-flea-market
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+### 1. 環境変数ファイルを作成する
 
-## Contributing
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+`compose.yaml` は `${DB_DATABASE}` などを `.env` から読み込む。`.env` がないまま次の手順に進むと MySQL コンテナの起動に失敗するため、最初に作成する。
 
-## Code of Conduct
+### 2. 依存パッケージをインストールする
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v "$(pwd):/var/www/html" \
+    -w /var/www/html \
+    laravelsail/php84-composer:latest \
+    composer install
+```
 
-## Security Vulnerabilities
+以降の手順で使う `./vendor/bin/sail` 自体が `vendor/` にあるため、この手順だけは Sail を使えない。Composer を含むコンテナを一度だけ起動して `vendor/` を用意する。
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+アプリケーションの実行環境は PHP 8.5 だが、ここでは PHP 8.4 のイメージを使う。`laravelsail/php85-composer` が公開されていないためであり、`composer.lock` のプラットフォーム要件は PHP 8.4 で満たせる。
 
-## License
+### 3. コンテナを起動する
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```bash
+./vendor/bin/sail up -d
+```
+
+### 4. アプリケーションをセットアップする
+
+```bash
+./vendor/bin/sail composer setup
+```
+
+アプリケーションキーの生成、マイグレーション、フロントエンドのビルドまでを行う。`SESSION_DRIVER` と `CACHE_STORE` が `database` のため、マイグレーションを実行しないとリクエストが失敗する。
+
+### 5. Git フックを有効化する
+
+```bash
+./vendor/bin/sail npm run prepare
+```
+
+`.npmrc` で `ignore-scripts=true` を指定しているため、`npm install` では `prepare` スクリプトが実行されず、husky のフックが設定されない。クローンごとに一度だけ実行する。
+
+### エイリアス
+
+Sail が用意しているエイリアスを設定すると、`./vendor/bin/sail` を `sail` と書ける。
+
+```bash
+alias sail='sh $([ -f sail ] && echo sail || echo vendor/bin/sail)'
+```
+
+以降のコマンドはこのエイリアスを前提に表記する。
+
+## アクセス先
+
+| 用途             | URL・接続先                |
+| ---------------- | -------------------------- |
+| アプリケーション | http://localhost           |
+| Mailpit          | http://localhost:8025      |
+| Telescope        | http://localhost/telescope |
+| MySQL            | 127.0.0.1:3306             |
+
+GUI クライアントから MySQL に接続する場合は、ユーザー `sail`・パスワード `password`・データベース `laravel` を使う。
+
+## 開発用コマンド
+
+| コマンド                      | 説明                              |
+| ----------------------------- | --------------------------------- |
+| `sail up -d`・`sail down`     | コンテナの起動・停止              |
+| `sail npm run dev`            | Vite の開発サーバーを起動         |
+| `sail test`                   | PHPUnit を実行                    |
+| `sail npm run test`           | Vitest を実行                     |
+| `sail pint`                   | PHP を整形（`--test` で検査のみ） |
+| `sail bin phpstan analyse`    | Larastan で静的解析               |
+| `sail npx prettier --write .` | Blade・JavaScript・CSS などを整形 |
+| `sail composer ide`           | IDE ヘルパー用のメタデータを生成  |
+
+## 環境変数
+
+`.env.example` を読めば分かるもの以外で、補足が必要な項目を挙げる。
+
+### ポート
+
+`.env.example` には含まれないが、`compose.yaml` が参照する。ホスト側のポートが埋まっている場合は `.env` に追記する。
+
+| 変数                             | 既定値 | 対象                      |
+| -------------------------------- | ------ | ------------------------- |
+| `APP_PORT`                       | 80     | アプリケーション          |
+| `VITE_PORT`                      | 5173   | Vite                      |
+| `FORWARD_DB_PORT`                | 3306   | MySQL                     |
+| `FORWARD_MAILPIT_PORT`           | 1025   | Mailpit（SMTP）           |
+| `FORWARD_MAILPIT_DASHBOARD_PORT` | 8025   | Mailpit（ダッシュボード） |
+
+### ホスト名
+
+`DB_HOST=mysql` と `MAIL_HOST=mailpit` は Docker ネットワーク内のサービス名であり、コンテナの中からのみ解決できる。ホスト側の GUI クライアントなどから接続する場合は `127.0.0.1` を使う。
+
+### データベース
+
+アプリケーションは `laravel`、テストは `testing` を使う。`testing` は Sail の初期化スクリプトが MySQL コンテナの初回起動時に作成する。`phpunit.xml` が `DB_DATABASE` を含む値を上書きするため、`.env` を書き換えてもテストの接続先は変わらない。
+
+### ロケール
+
+`APP_LOCALE=ja`・`APP_FALLBACK_LOCALE=en`・`APP_FAKER_LOCALE=ja_JP` を指定している。Laravel の既定値から変更しており、日本語の翻訳ファイルは `laravel-lang/common` が提供する。
+
+### Telescope
+
+`.env.example` には含まれない。`TELESCOPE_ENABLED` の既定値は `true` だが、`AppServiceProvider` が `local` 環境でのみサービスプロバイダーを登録するため、それ以外の環境では有効にならない。
+
+### WWWUSER・WWWGROUP
+
+`sail` スクリプトが実行時に設定する。`docker compose` を直接実行すると未設定のままとなり、コンテナが作成するファイルの所有者がホスト側のユーザーと食い違う。
+
+## 品質管理
+
+| ツール          | 対象                                                  |
+| --------------- | ----------------------------------------------------- |
+| Pint            | PHP の整形（Laravel プリセット）                      |
+| Larastan        | 静的解析（レベル 6、`tests` を含む）                  |
+| Prettier        | Blade・JavaScript・CSS・Markdown などの整形           |
+| PHPUnit・Vitest | テスト                                                |
+| commitlint      | Conventional Commits に沿ったコミットメッセージの検査 |
+
+husky で、コミット時に lint-staged による整形を、コミットメッセージの作成時に commitlint による検査を実行する。
+
+GitHub Actions では、`main` への pull request と push に対して static analysis・test・frontend・commitlint の 4 ジョブを並列で実行する。
