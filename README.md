@@ -154,3 +154,11 @@ GUI クライアントから MySQL に接続する場合は、ユーザー `sail
 husky で、コミット時に lint-staged による整形を、コミットメッセージの作成時に commitlint による検査を実行する。
 
 GitHub Actions では、`main` への pull request と push に対して static analysis・test・frontend・commitlint の 4 ジョブを並列で実行する。
+
+## AI 支援
+
+Laravel Boost を開発用の依存として入れている。`.mcp.json` が MCP サーバーを登録し、このプロジェクトに入っているバージョンに合わせた Laravel のドキュメントの検索、スキーマやログの参照などを AI エージェントから行える。
+
+ホストに PHP がないため、`.mcp.json` は `php artisan` ではなく `./vendor/bin/sail artisan` を呼ぶ。MCP サーバーはエージェントの起動時に立ち上がるため、**先に `sail up -d` でコンテナを起動しておく**。停止したまま起動すると、サーバーが起動に失敗し、コンテナを起動したあとでエージェントを起動し直すことになる。
+
+生成された AI 向けのガイドラインは取り込まない。`boost:install` は `CLAUDE.md` を書き換えるため実行せず、`.mcp.json` は手で書いている。
