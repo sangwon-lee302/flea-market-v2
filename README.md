@@ -1,6 +1,6 @@
 # COACHTECH フリマ
 
-[![CI](https://github.com/sangwon-lee302/coachtech-flea-market/actions/workflows/ci.yml/badge.svg)](https://github.com/sangwon-lee302/coachtech-flea-market/actions/workflows/ci.yml)
+[![CI](https://github.com/sangwon-lee302/flea-market-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/sangwon-lee302/flea-market-v2/actions/workflows/ci.yml)
 
 商品の出品と購入ができるフリマアプリケーション。
 
@@ -22,8 +22,8 @@
 Docker が動作する環境があればよく、ホストに PHP や Node.js は必要ない。
 
 ```bash
-git clone git@github.com:sangwon-lee302/coachtech-flea-market.git
-cd coachtech-flea-market
+git clone git@github.com:sangwon-lee302/flea-market-v2.git
+cd flea-market-v2
 ```
 
 ### 1. 環境変数ファイルを作成する
